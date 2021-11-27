@@ -1,4 +1,5 @@
 from api.filters import ExpenseFilter, IncomeFilter
+from api.pagination import StandardResultSetPagination
 from api.serializers import (BudgetSerializer, CategorySerializer,
                              ExpenseSerializer, IncomeSerializer,
                              UserSerializer)
@@ -11,6 +12,21 @@ from rest_framework.generics import (CreateAPIView, ListAPIView,
 from rest_framework.permissions import AllowAny
 
 User = get_user_model()
+
+
+class ListViewMixin:
+    pagination_class = StandardResultSetPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ['date']
+    ordering = ['-date', '-id']
+
+
+class CreateViewMixin:
+    permission_classes = (AllowAny,)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 
 class UserCreateAPIView(CreateAPIView):
@@ -43,13 +59,9 @@ class BudgetListAPIView(ListAPIView):
         return Budget.objects.filter(owner=self.request.user)
 
 
-class BudgetCreateAPIView(CreateAPIView):
+class BudgetCreateAPIView(CreateViewMixin, CreateAPIView):
     model = Budget
     serializer_class = BudgetSerializer
-    permission_classes = (AllowAny,)
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
 
 class BudgetDetails(RetrieveUpdateDestroyAPIView):
@@ -61,26 +73,19 @@ class BudgetDetails(RetrieveUpdateDestroyAPIView):
         return Budget.objects.filter(owner=self.request.user)
 
 
-class ExpensesListAPIView(ListAPIView):
+class ExpensesListAPIView(ListViewMixin, ListAPIView):
     model = Expense
     serializer_class = ExpenseSerializer
     permission_classes = (AllowAny,)
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ExpenseFilter
-    ordering_fields = ['date']
-    ordering = ['-date', '-id']
 
     def get_queryset(self):
         return Expense.objects.filter(owner=self.request.user)
 
 
-class ExpenseCreateAPIView(CreateAPIView):
+class ExpenseCreateAPIView(CreateViewMixin, CreateAPIView):
     model = Expense
     serializer_class = ExpenseSerializer
-    permission_classes = (AllowAny,)
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
 
 class ExpenseDetails(RetrieveUpdateDestroyAPIView):
@@ -92,27 +97,20 @@ class ExpenseDetails(RetrieveUpdateDestroyAPIView):
         return Expense.objects.filter(owner=self.request.user)
 
 
-class IncomesListAPIView(ListAPIView):
+class IncomesListAPIView(ListViewMixin, ListAPIView):
 
     model = Income
     serializer_class = IncomeSerializer
     permission_classes = (AllowAny,)
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = IncomeFilter
-    ordering_fields = ['date']
-    ordering = ['-date', '-id']
 
     def get_queryset(self):
         return Income.objects.filter(owner=self.request.user)
 
 
-class IncomesCreateAPIView(CreateAPIView):
+class IncomesCreateAPIView(CreateViewMixin, CreateAPIView):
     model = Income
     serializer_class = IncomeSerializer
-    permission_classes = (AllowAny,)
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
 
 class IncomeDetails(RetrieveUpdateDestroyAPIView):
