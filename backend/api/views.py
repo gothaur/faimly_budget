@@ -1,17 +1,12 @@
-from django.contrib.auth import (
-    get_user_model,
-)
-from rest_framework.permissions import (
-    AllowAny,
-)
-from rest_framework.generics import (
-    CreateAPIView, ListAPIView,
-)
-
-from api.serializers import (
-    UserSerializer, ExpenseSerializer, CategorySerializer, IncomeSerializer, BudgetSerializer,
-)
-from budget.models import Category, Expense, Income, Budget
+from api.filters import ExpenseFilter, IncomeFilter
+from api.serializers import (BudgetSerializer, CategorySerializer,
+                             ExpenseSerializer, IncomeSerializer,
+                             UserSerializer)
+from budget.models import Budget, Category, Expense, Income
+from django.contrib.auth import get_user_model
+from rest_framework.filters import BaseFilterBackend, OrderingFilter
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import AllowAny
 
 User = get_user_model()
 
@@ -27,6 +22,7 @@ class CategoriesListAPIView(ListAPIView):
     model = Category
     serializer_class = CategorySerializer
     permission_classes = (AllowAny,)
+    filter_backends = [BaseFilterBackend, OrderingFilter]
 
 
 class CategoriesCreateAPIView(CreateAPIView):
@@ -39,6 +35,7 @@ class BudgetListAPIView(ListAPIView):
     model = Budget
     serializer_class = BudgetSerializer
     permission_classes = (AllowAny,)
+    filter_backends = [OrderingFilter]
 
     def get_queryset(self):
         return Budget.objects.filter(owner=self.request.user)
@@ -53,13 +50,24 @@ class BudgetCreateAPIView(CreateAPIView):
         serializer.save(owner=self.request.user)
 
 
+class BudgetDetails(RetrieveUpdateDestroyAPIView):
+    model = Budget
+    serializer_class = BudgetSerializer
+    permission_classes = (AllowAny,)
+
+    def get_queryset(self):
+        return Budget.objects.filter(owner=self.request.user)
+
+
 class ExpensesListAPIView(ListAPIView):
     model = Expense
     serializer_class = ExpenseSerializer
     permission_classes = (AllowAny,)
+    # filter_backends = [ExpenseFilter, OrderingFilter]
+    # filterset_class = ExpenseFilter
 
     def get_queryset(self):
-        return Expense.objects.filter(budget__owner=self.request.user)
+        return Expense.objects.filter(owner=self.request.user)
 
 
 
@@ -68,18 +76,43 @@ class ExpenseCreateAPIView(CreateAPIView):
     serializer_class = ExpenseSerializer
     permission_classes = (AllowAny,)
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class ExpenseDetails(RetrieveUpdateDestroyAPIView):
+    model = Expense
+    serializer_class = ExpenseSerializer
+    permission_classes = (AllowAny,)
+
+    def get_queryset(self):
+        return Expense.objects.filter(owner=self.request.user)
+
 
 class IncomesListAPIView(ListAPIView):
 
     model = Income
     serializer_class = IncomeSerializer
     permission_classes = (AllowAny,)
+    # filter_backends = [IncomeFilter, OrderingFilter]
 
     def get_queryset(self):
-        return Income.objects.filter(budget__owner=self.request.user)
+        return Income.objects.filter(owner=self.request.user)
 
 
 class IncomesCreateAPIView(CreateAPIView):
     model = Income
     serializer_class = IncomeSerializer
     permission_classes = (AllowAny,)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class IncomeDetails(RetrieveUpdateDestroyAPIView):
+    model = Income
+    serializer_class = IncomeSerializer
+    permission_classes = (AllowAny,)
+
+    def get_queryset(self):
+        return Income.objects.filter(owner=self.request.user)

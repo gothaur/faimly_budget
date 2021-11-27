@@ -6,9 +6,29 @@ User = get_user_model()
 
 
 class BudgetSerializer(serializers.ModelSerializer):
+
+    owner = serializers.SlugRelatedField(
+        read_only=True, slug_field='username')
+
+    expenses = serializers.SerializerMethodField()
+    incomes = serializers.SerializerMethodField()
+
+    def get_expenses(self, obj):
+        budget_id = obj.pk
+        current_user = self.context['request'].user
+        expenses = Expense.objects.filter(owner=current_user, budget_id=budget_id)
+        return ExpenseSerializer(expenses, many=True).data
+
+    def get_incomes(self, obj):
+        budget_id = obj.pk
+        current_user = self.context['request'].user
+        incomes = Income.objects.filter(owner=current_user, budget_id=budget_id)
+        return IncomeSerializer(incomes, many=True).data
+
+
     class Meta:
         model = Budget
-        fields = ['name']
+        fields = '__all__'
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -19,12 +39,21 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ExpenseSerializer(serializers.ModelSerializer):
 
+    owner = serializers.SlugRelatedField(
+        read_only=True, slug_field='username')
+    category = serializers.SlugRelatedField(
+        slug_field='name', queryset=Category.objects.all())
+
     class Meta:
         model = Expense
         fields = "__all__"
 
 
 class IncomeSerializer(serializers.ModelSerializer):
+
+    owner = serializers.SlugRelatedField(
+        read_only=True, slug_field='username')
+
     class Meta:
         model = Income
         fields = '__all__'

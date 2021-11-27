@@ -4,4 +4,6 @@ from django.contrib.auth.models import (
 
 
 class User(AbstractUser):
-    ...
+
+    def __str__(self):
+        return self.username
