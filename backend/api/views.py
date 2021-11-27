@@ -4,8 +4,10 @@ from api.serializers import (BudgetSerializer, CategorySerializer,
                              UserSerializer)
 from budget.models import Budget, Category, Expense, Income
 from django.contrib.auth import get_user_model
-from rest_framework.filters import BaseFilterBackend, OrderingFilter
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
+from rest_framework.generics import (CreateAPIView, ListAPIView,
+                                     RetrieveUpdateDestroyAPIView)
 from rest_framework.permissions import AllowAny
 
 User = get_user_model()
@@ -22,7 +24,7 @@ class CategoriesListAPIView(ListAPIView):
     model = Category
     serializer_class = CategorySerializer
     permission_classes = (AllowAny,)
-    filter_backends = [BaseFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
 
 
 class CategoriesCreateAPIView(CreateAPIView):
@@ -63,12 +65,13 @@ class ExpensesListAPIView(ListAPIView):
     model = Expense
     serializer_class = ExpenseSerializer
     permission_classes = (AllowAny,)
-    # filter_backends = [ExpenseFilter, OrderingFilter]
-    # filterset_class = ExpenseFilter
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = ExpenseFilter
+    ordering_fields = ['date']
+    ordering = ['-date', '-id']
 
     def get_queryset(self):
         return Expense.objects.filter(owner=self.request.user)
-
 
 
 class ExpenseCreateAPIView(CreateAPIView):
@@ -94,7 +97,10 @@ class IncomesListAPIView(ListAPIView):
     model = Income
     serializer_class = IncomeSerializer
     permission_classes = (AllowAny,)
-    # filter_backends = [IncomeFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = IncomeFilter
+    ordering_fields = ['date']
+    ordering = ['-date', '-id']
 
     def get_queryset(self):
         return Income.objects.filter(owner=self.request.user)
