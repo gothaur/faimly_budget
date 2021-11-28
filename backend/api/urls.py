@@ -17,6 +17,6 @@ urlpatterns = [
     path('expense/create/', ExpenseCreateAPIView.as_view(), name='expenses-create'),
     path('expense/details/<int:pk>/', ExpenseDetails.as_view(), name='expenses-details'),
     path('income/all/', IncomesListAPIView.as_view(), name='incomes-list'),
-    path('income/create/', IncomesCreateAPIView.as_view(), name='incomes-crate'),
+    path('income/create/', IncomesCreateAPIView.as_view(), name='income-create'),
     path('income/details/<int:pk>/', IncomeDetails.as_view(), name='income-details'),
 ]
