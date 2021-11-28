@@ -8,7 +8,7 @@ class Budget(models.Model):
     name = models.CharField(max_length=64)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     shared_with = models.ManyToManyField(
-        User, related_name='shared_with', blank=True, null=True)
+        User, related_name='shared_with', blank=True)
 
     def __str__(self):
         return self.name
@@ -27,7 +27,8 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.CharField(max_length=255, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name='expenses')
+    budget = models.ForeignKey(
+        Budget, on_delete=models.CASCADE, related_name='expenses')
 
     def __str__(self):
         return self.description
@@ -38,7 +39,8 @@ class Income(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.CharField(max_length=255, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name='incomes')
+    budget = models.ForeignKey(
+        Budget, on_delete=models.CASCADE, related_name='incomes')
 
     def __str__(self):
         return self.description

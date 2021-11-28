@@ -47,6 +47,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
     owner = serializers.SlugRelatedField(
         read_only=True, slug_field='username')
+    budget = serializers.SlugRelatedField(
+        read_only=True, slug_field='name')
     category = serializers.SlugRelatedField(
         slug_field='name', queryset=Category.objects.all())
 
@@ -59,6 +61,8 @@ class IncomeSerializer(serializers.ModelSerializer):
 
     owner = serializers.SlugRelatedField(
         read_only=True, slug_field='username')
+    budget = serializers.SlugRelatedField(
+        read_only=True, slug_field='name')
 
     class Meta:
         model = Income

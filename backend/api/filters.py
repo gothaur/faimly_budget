@@ -1,5 +1,5 @@
 import django_filters
-from budget.models import Expense, Income
+from budget.models import Expense, Income, Budget
 
 
 class BaseFilter(django_filters.FilterSet):
@@ -21,3 +21,10 @@ class IncomeFilter(BaseFilter):
     class Meta:
         model = Income
         fields = ['date_gte', 'date_lte']
+
+
+class BudgetFilter(django_filters.FilterSet):
+
+    class Meta:
+        model = Budget
+        fields = ['owner']

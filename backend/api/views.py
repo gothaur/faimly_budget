@@ -1,13 +1,13 @@
-from django.db.models import Q
-
-from api.filters import ExpenseFilter, IncomeFilter
+from api.filters import BudgetFilter, ExpenseFilter, IncomeFilter
 from api.pagination import StandardResultSetPagination
 from api.serializers import (BudgetSerializer, CategorySerializer,
                              ExpenseSerializer, IncomeSerializer,
                              UserSerializer)
 from budget.models import Budget, Category, Expense, Income
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import (CreateAPIView, ListAPIView,
                                      RetrieveUpdateDestroyAPIView)
@@ -24,10 +24,16 @@ class ListViewMixin:
 
 
 class CreateViewMixin:
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        budget_id = self.kwargs['budget_pk']
+        owner = self.request.user
+        try:
+            budget = Budget.objects.get(pk=budget_id, owner=owner)
+        except:
+            raise PermissionDenied()
+        serializer.save(owner=owner, budget=budget)
 
 
 
@@ -55,8 +61,9 @@ class BudgetListAPIView(ListViewMixin, ListAPIView):
     model = Budget
     serializer_class = BudgetSerializer
     permission_classes = (IsAuthenticated,)
-    filter_backends = [OrderingFilter]
-    ordering = []
+    filter_backends = [OrderingFilter, DjangoFilterBackend]
+    filterset_class = BudgetFilter
+    ordering = ['-id']
 
     def get_queryset(self):
         user = self.request.user
@@ -90,8 +97,9 @@ class ExpensesListAPIView(ListViewMixin, ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        budget_id = self.kwargs['budget_pk']
         return Expense.objects.filter(
-            Q(owner=user) | Q(budget__shared_with=user))
+            Q(owner=user) | Q(budget__shared_with=user), budget_id=budget_id)
 
 
 class ExpenseCreateAPIView(CreateViewMixin, CreateAPIView):
@@ -116,7 +124,10 @@ class IncomesListAPIView(ListViewMixin, ListAPIView):
     filterset_class = IncomeFilter
 
     def get_queryset(self):
-        return Income.objects.filter(owner=self.request.user)
+        user = self.request.user
+        budget_id = self.kwargs['budget_pk']
+        return Income.objects.filter(
+            Q(owner=user) | Q(budget__shared_with=user), budget_id=budget_id)
 
 
 class IncomesCreateAPIView(CreateViewMixin, CreateAPIView):
