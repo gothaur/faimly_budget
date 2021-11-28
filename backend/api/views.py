@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from api.filters import ExpenseFilter, IncomeFilter
 from api.pagination import StandardResultSetPagination
 from api.serializers import (BudgetSerializer, CategorySerializer,
@@ -22,7 +24,7 @@ class ListViewMixin:
 
 
 class CreateViewMixin:
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -49,14 +51,17 @@ class CategoriesCreateAPIView(CreateAPIView):
     permission_classes = (IsAuthenticated,)
 
 
-class BudgetListAPIView(ListAPIView):
+class BudgetListAPIView(ListViewMixin, ListAPIView):
     model = Budget
     serializer_class = BudgetSerializer
     permission_classes = (IsAuthenticated,)
     filter_backends = [OrderingFilter]
+    ordering = []
 
     def get_queryset(self):
-        return Budget.objects.filter(owner=self.request.user)
+        user = self.request.user
+        return Budget.objects.filter(
+            Q(owner=user) | Q(shared_with=user) )
 
 
 class BudgetCreateAPIView(CreateViewMixin, CreateAPIView):
@@ -73,7 +78,8 @@ class BudgetDetails(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return Budget.objects.filter(owner=self.request.user)
+        user = self.request.user
+        return Budget.objects.filter(Q(owner=user) | Q(shared_with=user))
 
 
 class ExpensesListAPIView(ListViewMixin, ListAPIView):
@@ -83,7 +89,9 @@ class ExpensesListAPIView(ListViewMixin, ListAPIView):
     filterset_class = ExpenseFilter
 
     def get_queryset(self):
-        return Expense.objects.filter(owner=self.request.user)
+        user = self.request.user
+        return Expense.objects.filter(
+            Q(owner=user) | Q(budget__shared_with=user))
 
 
 class ExpenseCreateAPIView(CreateViewMixin, CreateAPIView):

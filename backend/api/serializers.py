@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from budget.models import Budget, Category, Expense, Income
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -16,13 +18,17 @@ class BudgetSerializer(serializers.ModelSerializer):
     def get_expenses(self, obj):
         budget_id = obj.pk
         current_user = self.context['request'].user
-        expenses = Expense.objects.filter(owner=current_user, budget_id=budget_id)
+        expenses = Expense.objects.filter(
+            Q(owner=current_user) | Q(budget__shared_with=current_user),
+            budget_id=budget_id)
         return ExpenseSerializer(expenses, many=True).data
 
     def get_incomes(self, obj):
         budget_id = obj.pk
         current_user = self.context['request'].user
-        incomes = Income.objects.filter(owner=current_user, budget_id=budget_id)
+        incomes = Income.objects.filter(
+            Q(owner=current_user) | Q(budget__shared_with=current_user),
+            budget_id=budget_id)
         return IncomeSerializer(incomes, many=True).data
 
 
