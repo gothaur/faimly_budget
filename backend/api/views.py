@@ -1,5 +1,6 @@
 from api.filters import BudgetFilter, ExpenseFilter, IncomeFilter
 from api.pagination import StandardResultSetPagination
+from api.permissions import AuthorOrReadOnly
 from api.serializers import (BudgetSerializer, CategorySerializer,
                              ExpenseSerializer, IncomeSerializer,
                              UserSerializer)
@@ -31,7 +32,7 @@ class CreateViewMixin:
         owner = self.request.user
         try:
             budget = Budget.objects.get(pk=budget_id, owner=owner)
-        except:
+        except Budget.DoesNotExist:
             raise PermissionDenied()
         serializer.save(owner=owner, budget=budget)
 
@@ -82,7 +83,7 @@ class BudgetCreateAPIView(CreateViewMixin, CreateAPIView):
 class BudgetDetails(RetrieveUpdateDestroyAPIView):
     model = Budget
     serializer_class = BudgetSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, AuthorOrReadOnly)
 
     def get_queryset(self):
         user = self.request.user
@@ -110,7 +111,7 @@ class ExpenseCreateAPIView(CreateViewMixin, CreateAPIView):
 class ExpenseDetails(RetrieveUpdateDestroyAPIView):
     model = Expense
     serializer_class = ExpenseSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, AuthorOrReadOnly)
 
     def get_queryset(self):
         return Expense.objects.filter(owner=self.request.user)
@@ -138,7 +139,7 @@ class IncomesCreateAPIView(CreateViewMixin, CreateAPIView):
 class IncomeDetails(RetrieveUpdateDestroyAPIView):
     model = Income
     serializer_class = IncomeSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, AuthorOrReadOnly)
 
     def get_queryset(self):
         return Income.objects.filter(owner=self.request.user)
